@@ -20,7 +20,10 @@ const userSchema = new mongoose.Schema({
         minlength: 6,
         trim: true
     },
-    accountType: String,
+    accountType: {
+        type: String,
+        default: "student"
+    },
     email: {
         type: String,
         unique: true,
