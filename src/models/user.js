@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema({
     email: {
         type: String,
         unique: true,
-        required: true,
         lowercase: true,
         trim: true,
         validate(value) {
@@ -35,13 +34,11 @@ const userSchema = new mongoose.Schema({
     },
     firstName: {
         type: String,
-        trim: true,
-        required: true
+        trim: true
     },
     lastName: {
         type: String,
-        trim: true,
-        required: true
+        trim: true
     },
     dateOfBirth: Date,
     phoneNumber: {
