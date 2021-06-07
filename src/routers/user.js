@@ -34,7 +34,6 @@ router.post('/users/login', async (req, res) => {
     }
 });
 
-
 // @POST /users/logout
 // @Desc Log out account on this device
 router.post('/users/logout', authenticate, async (req, res) => {
@@ -79,7 +78,7 @@ router.post('/users/me/avatar', authenticate, upload.single('avatar'),  async (r
     }
 }, (error, req, res, next) => {
     res.status(400).send(error);
-})
+});
 
 // @POST /users/me/coverPhoto
 // @Desc Update cover photo

@@ -97,6 +97,8 @@ userSchema.methods.toJSON = function() {
     const user = this;
     const userObject = user.toObject();
 
+    userObject.avatarURL = process.env.DOMAIN + "users/" + user.account + "/avatar";
+    userObject.photoURL = process.env.DOMAIN + "users/" + user.account + "/coverPhoto";
     delete userObject.password;
     delete userObject.tokens;
     delete userObject.avatar;
