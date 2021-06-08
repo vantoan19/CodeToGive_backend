@@ -68,7 +68,8 @@ router.post('/users/logoutall', authenticate, async(req, res) => {
 // @Desc Update avatar
 router.post('/users/me/avatar', authenticate, upload.single('avatar'),  async (req, res) => {
     try {
-        const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 250 }).png().toBuffer();
+        const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 250 })
+                                                   .png().toBuffer();
         req.user.avatar = buffer;
         await req.user.save();
 
@@ -102,6 +103,7 @@ router.get('/users/me', authenticate, async(req, res) => {
     res.send({ message: 'Get data succesfully', user: req.user });
 });
 
+
 // @GET /users/:account
 // @Desc Get user's profile without credential
 router.get('/users/:account', async(req, res) => {
@@ -114,7 +116,7 @@ router.get('/users/:account', async(req, res) => {
     } catch (error) {
         res.status(404).send(error);
     }
-})
+});
 
 // @GET /users/:account/avatar
 // @Desc Get user avatar
