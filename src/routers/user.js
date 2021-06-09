@@ -6,9 +6,9 @@ const sharp = require('sharp');
 
 const router = new express.Router();
 
-// @POST /users/create
+// @POST api/users/create
 // @Desc Create new user
-router.post('/users/create', async (req, res) => {
+router.post('/api/users/create', async (req, res) => {
     console.log(req.body);
     const user = new User(req.body);
 
@@ -21,9 +21,9 @@ router.post('/users/create', async (req, res) => {
     }
 });
 
-// @POST /users/login
+// @POST /api/users/login
 // @Desc Log in, create token
-router.post('/users/login', async (req, res) => {
+router.post('/api/users/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.account, req.body.password);
         const token = await user.generateAuthToken();
@@ -34,9 +34,9 @@ router.post('/users/login', async (req, res) => {
     }
 });
 
-// @POST /users/logout
+// @POST /api/users/logout
 // @Desc Log out account on this device
-router.post('/users/logout', authenticate, async (req, res) => {
+router.post('/api/users/logout', authenticate, async (req, res) => {
     try {
         req.user.tokens = req.user.tokens.filter((token) => {
             return token.token !== req.token;
@@ -50,9 +50,9 @@ router.post('/users/logout', authenticate, async (req, res) => {
     }
 });
 
-// @POST /users/logoutall
+// @POST /api/users/logoutall
 // @Desc Log out all sessions
-router.post('/users/logoutall', authenticate, async(req, res) => {
+router.post('/api/users/logoutall', authenticate, async(req, res) => {
     try {
         req.user.tokens = [];
 
@@ -64,9 +64,9 @@ router.post('/users/logoutall', authenticate, async(req, res) => {
     }
 });
 
-// @POST /users/me/avatar
+// @POST /api/users/me/avatar
 // @Desc Update avatar
-router.post('/users/me/avatar', authenticate, upload.single('avatar'),  async (req, res) => {
+router.post('/api/users/me/avatar', authenticate, upload.single('avatar'),  async (req, res) => {
     try {
         const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 250 })
                                                    .png().toBuffer();
@@ -118,9 +118,9 @@ router.get('/users/:account', async(req, res) => {
     }
 });
 
-// @GET /users/:account/avatar
+// @GET /api/users/:account/avatar
 // @Desc Get user avatar
-router.get('/users/:account/avatar', async(req, res) => {
+router.get('/api/users/:account/avatar', async(req, res) => {
     try {
         const user = await User.findOne({ account: req.params.account });
 
@@ -135,9 +135,9 @@ router.get('/users/:account/avatar', async(req, res) => {
     }
 });
 
-// @GET /user/:account/coverPhoto
+// @GET /api/user/:account/coverPhoto
 // @Desc Get user coverphoto
-router.get('/users/:account/coverPhoto', async(req, res) => {
+router.get('/api/users/:account/coverPhoto', async(req, res) => {
     try {
         const user = await User.findOne({ account: req.params.account });
 
@@ -152,9 +152,9 @@ router.get('/users/:account/coverPhoto', async(req, res) => {
     }
 });
 
-// @PATCH /users/me
+// @PATCH /api/users/me
 // @Desc Update profile
-router.patch('/users/me', authenticate, async(req, res) => {
+router.patch('/api/users/me', authenticate, async(req, res) => {
     const allowedUpdates = ['email', 'firstName', 'lastName', 'dateOfBirth', 
                             'phoneNumber', 'address', 'profileDescription', 'stars', 'takenTasks', 'badges' ];
     const updates = Object.keys(req.body);
@@ -172,9 +172,9 @@ router.patch('/users/me', authenticate, async(req, res) => {
     }
 });
 
-// @DELETE /users/me
+// @DELETE /api/users/me
 // @Desc Delete user
-router.delete('/users/me', authenticate, async (req, res) => {
+router.delete('/api/users/me', authenticate, async (req, res) => {
     try {
         await req.user.remove()
 

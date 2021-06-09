@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const taskSchema = new mongoose.Schema({
-    taskID: mongoose.ObjectId,
+    taskID: String,
     takenDate: Date,
     score: {
         type: Number,
@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
+    classes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Class'
+    }],
     firstName: {
         type: String,
         trim: true

@@ -1,6 +1,6 @@
 const express = require('express');
 const userRouter = require('./routers/user');
-const guessPicRouter = require('./routers/guess-pic');
+const guessPicRouter = require('./routers/pic-quiz');
 require('./db/connector');
 
 
