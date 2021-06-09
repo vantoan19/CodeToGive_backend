@@ -235,7 +235,7 @@ router.delete('/api/pic-quiz/:id', authenticate, async (req, res) => {
 
         quiz.smallQuestions
             .forEach(async smallQuestion => 
-                    await deleteQuestionByType(smallQuestion.questionType, smallQuestion.info));
+                    await deleteQuestionByType(smallQuestion.questionType, { _id: smallQuestion.info._id }));
 
         res.send({ message: 'Deleted succesfully' });
     } catch (error) {

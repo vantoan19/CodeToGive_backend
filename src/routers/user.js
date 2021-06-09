@@ -83,7 +83,7 @@ router.post('/api/users/me/avatar', authenticate, upload.single('avatar'),  asyn
 
 // @POST /users/me/coverPhoto
 // @Desc Update cover photo
-router.post('/users/me/coverPhoto', authenticate, upload.single('coverPhoto'), async (req, res) => {
+router.post('/api/users/me/coverPhoto', authenticate, upload.single('coverPhoto'), async (req, res) => {
     try {
         const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 1000 }).png().toBuffer();
         req.user.coverPhoto = buffer;
