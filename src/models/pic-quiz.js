@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const picQuizSchema = new mongoose.Schema({
     quizType: {
         type: String,
-        default: 'Guess Pic Game'
+        default: 'PicQuizz'
     },
     quizId: {
         type: String,

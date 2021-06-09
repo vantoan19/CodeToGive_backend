@@ -74,6 +74,31 @@ router.post('/api/pic-quiz/:id/new-question', authenticate, upload.single('quest
     }
 });
 
+
+
+//===================================================================================
+//===================================================================================
+
+// @GET /api/pic-quiz/need-to-do
+// @Desc Get need to do
+router.get('/api/pic-quiz/need-to-do', async (req, res) => {
+    try {
+        const quizzes = await PicQuiz.find({}).populate({
+            path: 'smallQuestions',
+            populate: {
+                path: 'question'
+            }
+        })
+
+        if (!quizzes) 
+            throw new Error('Not found');
+
+        res.send({ message: 'Get succesfully', quizzes });
+    } catch (error) {
+        res.status(404).send(error);
+    }
+});
+
 // @GET /api/pic-quiz/:id
 // @Desc Get quiz information by id
 router.get('/api/pic-quiz/:id', async (req, res) => {
@@ -139,6 +164,10 @@ router.get('/api/question/:questionType/:id', async (req, res) => {
 });
 
 
+//===================================================================================
+//===================================================================================
+
+
 
 // @PATCH /api/pic-quiz/:id
 // @Desc Modify quiz by id
@@ -154,16 +183,17 @@ router.patch('/api/pic-quiz/:id', authenticate, upload.single('bigQuestionImage'
 
     try {
         const quiz = await PicQuiz.findOne({ quizId });
-
+        
         if (req.file) {
             const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 1000 })
                                                        .png().toBuffer();
             quiz.bigQuestionImage = buffer;
         }
         updates.forEach(update => quiz[update] = req.body[update]);
+
         await quiz.save();
 
-        res.send({ message: 'Updated successfully', quiz });
+        res.send({ message: 'Updated successfully' });
     } catch (error) {
         res.status(400).send(error);
     }
@@ -203,6 +233,9 @@ router.patch('/api/pic-quiz/:id/:questionId', authenticate, upload.single('quest
         res.status(400).send(error);
     }
 });
+
+//===================================================================================
+//===================================================================================
 
 // @DELETE /api/pic-quiz/:id
 // @Desc Delete a quiz
