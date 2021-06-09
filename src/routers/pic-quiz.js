@@ -1,35 +1,54 @@
 const express = require('express');
+const sharp = require('sharp');
 const authenticate = require('../middleware/authenticate');
 const upload = require('../middleware/upload');
-const sharp = require('sharp');
-const Question = require('../models/question');
+const PicQuiz = require('../models/pic-quiz');
 const FillInBlankQuestion = require('../models/fill-in-blank-question');
 const MultipleChoiceQuestion = require('../models/multiple-choice-question');
-const PicQuiz = require('../models/pic-quiz');
 
 const router = new express.Router();
 
+//Logic
+const imageBufferProcess = async (originBuffer, width) => 
+                            await sharp(originBuffer).resize({ fit: sharp.fit.contain, width })
+                                                     .png()
+                                                     .toBuffer();
+                                                              
+const getDocumentByType = (questionType, obj) => 
+    questionType === 'fill-in-blank' ? new FillInBlankQuestion(obj) : new MultipleChoiceQuestion(obj);
+
+const getModelNameByType = (questionType) => 
+    questionType === 'fill-in-blank' ? 'FillInBlankQuestion' : 'MultipleChoiceQuestion';
+
+const findQuestionByType = async (questionType, indexes) =>
+    questionType === 'fill-in-blank' 
+                 ? await FillInBlankQuestion.findOne(indexes) 
+                 : await MultipleChoiceQuestion.findOne(indexes);
+
+const deleteQuestionByType = async (questionType, indexes) =>
+    questionType === 'fill-in-blank' 
+                ? await FillInBlankQuestion.deleteOne(indexes) 
+                : await MultipleChoiceQuestion.deleteOne(indexes);
+
+const findOneAndPopulateQuiz = async (indexes) => await PicQuiz.findOne(indexes)
+                                                               .populate('smallQuestions.info');
+                                                    
 
 // @POST /api/pic-quiz/create
 // @Desc Create a pic quiz
 router.post('/api/pic-quiz/create', authenticate, upload.single('bigQuestionImage'), async (req, res) => {
     if (req.user.accountType !== 'admin') 
-        return res.status(400)
-                  .send( { error: 'Only admin can create tasks' } );
+        return res.status(400).send( { error: 'Only admin can create tasks' } );
 
     const quiz = new PicQuiz(req.body);
 
     try {
-        const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 1000 })
-                                                   .png().toBuffer();
-        quiz.bigQuestionImage = buffer;
-
+        quiz.bigQuestionImage = await imageBufferProcess(req.file.buffer, 1000);
         await quiz.save();
-        res.status(201)
-           .send({ message: 'Created succesfully', quiz });
+        
+        res.status(201).send({ message: 'Created succesfully', quiz });
     } catch (error) {
-        res.status(400)
-           .send(error);
+        res.status(400).send(error);
     }
 });
 
@@ -41,31 +60,19 @@ router.post('/api/pic-quiz/:id/new-question', authenticate, upload.single('quest
         return res.status(400).send({ error: 'Only admin can create questions' });
 
     //Appropriate question document to question type
-    let concreteQuestion = null;
-    if (req.body.questionType === 'fill-in-blank')
-        concreteQuestion = new FillInBlankQuestion(req.body);
-    else 
-        concreteQuestion = new MultipleChoiceQuestion(req.body);
+    let concreteQuestion = getDocumentByType(req.body.questionType, req.body);
 
     try {
-        //Get image buffer
-        const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 1000 })
-                                               .png().toBuffer();
-        concreteQuestion.questionImage = buffer;
-
-        //Save concreteQuestion and create question
+        concreteQuestion.questionImage = await imageBufferProcess(req.file.buffer, 1000);
         await concreteQuestion.save();
-        const question = new Question({ question: concreteQuestion, 
-                                        questionType: (req.body.questionType === "fill-in-blank" ?
-                                                                                 "FillInBlankQuestion":
-                                                                                 "MultipleChoiceQuestion") });
-        await question.save();
 
         //Link question to current quiz
         const quizId = req.params.id;
         const quiz = await PicQuiz.findOne({ quizId });
-
-        quiz.smallQuestions.push(question);
+        quiz.smallQuestions.push({ 
+            info: concreteQuestion, 
+            questionType: getModelNameByType(req.body.questionType) 
+        });
         quiz.save();
 
         res.status(201).send({ message: 'Created successfully' });
@@ -83,12 +90,8 @@ router.post('/api/pic-quiz/:id/new-question', authenticate, upload.single('quest
 // @Desc Get need to do
 router.get('/api/pic-quiz/need-to-do', async (req, res) => {
     try {
-        const quizzes = await PicQuiz.find({}).populate({
-            path: 'smallQuestions',
-            populate: {
-                path: 'question'
-            }
-        })
+        const quizzes = await PicQuiz.find({}).populate('smallQuestions.info')
+                                              .populate('participants.participant');
 
         if (!quizzes) 
             throw new Error('Not found');
@@ -105,18 +108,14 @@ router.get('/api/pic-quiz/:id', async (req, res) => {
     const quizId = req.params.id;
 
     try {
-        const quiz = await PicQuiz.findOne({ quizId }).populate({
-            path: 'smallQuestions',
-            populate: {
-                path: 'question'
-            }
-        });
+        const quiz = await findOneAndPopulateQuiz({ quizId });
 
         if (!quiz)
             return res.status(404).send({ error: 'Not found' });
 
         res.send({ message: 'Get data successfully', quiz });
     } catch (error) {
+        console.log(error);
         res.status(500).send(error);
     }
 });
@@ -147,12 +146,8 @@ router.get('/api/question/:questionType/:id', async (req, res) => {
 
     console.log(questionType, questionId);
     try {
-        let question = null;
-        if (questionType == 'fill-in-blank') 
-            question = await FillInBlankQuestion.findOne({ _id: questionId });
-        else
-            question = await MultipleChoiceQuestion.findOne({ _id: questionId });
-        console.log(question);
+        let question = await findQuestionByType(questionType, { _id: questionId });
+
         if (!question || !question.questionImage)
             throw new Error('Not found');
 
@@ -184,13 +179,9 @@ router.patch('/api/pic-quiz/:id', authenticate, upload.single('bigQuestionImage'
     try {
         const quiz = await PicQuiz.findOne({ quizId });
         
-        if (req.file) {
-            const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 1000 })
-                                                       .png().toBuffer();
-            quiz.bigQuestionImage = buffer;
-        }
+        if (req.file) 
+            quiz.bigQuestionImage = await imageBufferProcess(req.file.buffer, 1000);
         updates.forEach(update => quiz[update] = req.body[update]);
-
         await quiz.save();
 
         res.send({ message: 'Updated successfully' });
@@ -199,36 +190,28 @@ router.patch('/api/pic-quiz/:id', authenticate, upload.single('bigQuestionImage'
     }
 });
 
-// @PATCH /api/pic-quiz/:id/:questionId
+// @PATCH /api/pic-quiz/:id/:questionType/:questionId
 // @Desc Modify a question of a task by question's id 
-router.patch('/api/pic-quiz/:id/:questionId', authenticate, upload.single('questionImage'), async (req, res) => {
+router.patch('/api/pic-quiz/:quizId/:questionType/:questionId', authenticate, upload.single('questionImage'), async (req, res) => {
     try {
         //Find quiz and question document
-        const quiz = await PicQuiz.findOne({ quizId: req.params.id });
-        const question = await Question.findById({ _id: questionId });
-
+        const quiz = await PicQuiz.findOne({ quizId: req.params.quizId });
+        const question = await findQuestionByType(req.params.questionType, { _id: req.params.questionId });
+        
         //Check if quiz or question doesn't exist or question doesn't belong to the quiz
         if (!quiz || !question)
             return res.status(404).send({ error: 'Quiz or question doesn\'t exist' });
-        if (!quiz.smallQuestions.includes(quiz._id))
+        if (!quiz.smallQuestions.some(smallQuestion => smallQuestion.info.str == question._id.str ))
             return res.status(400).send({ error: 'The question doesn\'t belong to the quiz' });
 
-        //Get the concrete question
-        const concreteQuestion = null;
-        if (question.questionType === 'fill-in-blank')
-            concreteQuestion = FillInBlankQuestion.findOne({ _id: question.question });
-        else 
-            concreteQuestion = MultipleChoiceQuestion.findOne({ _id: question.question });
-
-        if (!concreteQuestion)
-            return res.status(404).send({ error: 'Question doesn\'t exist' });
-
         //Updating stuff
+        if (req.file)
+            question.questionImage = await imageBufferProcess(req.file.buffer, 1000);
         const updates = Object.keys(req.body);
-        updates.forEach(update => concreteQuestion[update] = req.body.update);
-        const buffer = await sharp(req.file.buffer).resize({ fit: sharp.fit.contain, width: 1000 })
-                                                       .png().toBuffer();
-        concreteQuestion.questionImage = buffer;
+        updates.forEach(update => question[update] = req.body[update]);
+        await question.save();
+
+        res.send({ message: 'Updated succesfully '});
     } catch (error) {
         res.status(400).send(error);
     }
@@ -250,13 +233,10 @@ router.delete('/api/pic-quiz/:id', authenticate, async (req, res) => {
 
         if(!quiz) return res.status(404).send();
 
-        quiz.smallQuestions.forEach(async smallQuestion => {
-            const question = await Question.findOneAndDelete({ _id: smallQuestion._id });
-            if (question.questionType === 'FillInBlankQuestion')
-                await FillInBlankQuestion.findOneAndDelete({ _id: question.question._id });
-            else
-                await MultipleChoiceQuestion.findOneAndDelete({ _id: question.question._id });
-        })
+        quiz.smallQuestions
+            .forEach(async smallQuestion => 
+                    await deleteQuestionByType(smallQuestion.questionType, smallQuestion.info));
+
         res.send({ message: 'Deleted succesfully' });
     } catch (error) {
         res.status(500).send(error);

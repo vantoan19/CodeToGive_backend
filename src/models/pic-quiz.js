@@ -34,8 +34,16 @@ const picQuizSchema = new mongoose.Schema({
         required: true
     },
     smallQuestions: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Question'
+        info: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            refPath: 'smallQuestions.questionType'
+        },
+        questionType: {
+            type: String,
+            required: true,
+            enum: ['MultipleChoiceQuestion', 'FillInBlankQuestion']
+        }
     }],
     participants: [{
         participant: {
@@ -48,27 +56,17 @@ const picQuizSchema = new mongoose.Schema({
     }]
 });
 
-picQuizSchema.virtual('Small Questions', {
-    ref: 'Question',
-    localField: 'smallQuestions',
-    foreignField: '_id'
-});
-
-picQuizSchema.virtual('Participants', {
-    ref: 'User',
-    localField: 'participants.participant',
-    foreignField: '_id'
-})
 
 picQuizSchema.methods.toJSON = function() {
     const quiz = this;
     const quizObject = quiz.toObject();
-
-    quizObject.bigQuestionImageURL = process.env.DOMAIN + "api/pic-quiz/" + quiz.quizId + "/image";
+    
+    quizObject.bigQuestionImageURL = `${process.env.DOMAIN}api/pic-quiz/${quiz.quizId}/image`;;
     quizObject.smallQuestions.forEach(question => {
-        if (question.question.questionImage) 
-            question.question.questionImageURL = process.env.DOMAIN + "api/question/" + question.question.questionType + "/" + question.question._id;
-        delete question.question.questionImage;
+        if (question.info.questionImage) 
+            question.info.questionImageURL = `${process.env.DOMAIN}api/question/${question.info.questionType}/${question.info._id}`;
+        question.info.updateQuestionAPI_URL = `${process.env.DOMAIN}api/pic-quiz/${quiz.quizId}/${question.info.questionType}/${question.info._id}`;
+        delete question.info.questionImage;
     })
 
     delete quizObject.bigQuestionImage;

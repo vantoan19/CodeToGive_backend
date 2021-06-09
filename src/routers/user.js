@@ -97,16 +97,16 @@ router.post('/users/me/coverPhoto', authenticate, upload.single('coverPhoto'), a
     res.status(400).send(error);
 });
 
-// @GET /users/me
+// @GET /api/users/me
 // @Desc Get profile
-router.get('/users/me', authenticate, async(req, res) => {
+router.get('/api/users/me', authenticate, async(req, res) => {
     res.send({ message: 'Get data succesfully', user: req.user });
 });
 
 
 // @GET /users/:account
 // @Desc Get user's profile without credential
-router.get('/users/:account', async(req, res) => {
+router.get('/api/users/:account', async(req, res) => {
     try {
         const user = await User.findOne({ account: req.params.account });
 
