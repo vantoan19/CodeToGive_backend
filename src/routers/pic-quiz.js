@@ -9,7 +9,6 @@ const MultipleChoiceQuestion = require('../models/multiple-choice-question');
 const Class = require('../models/class');
 const User = require('../models/user');
 const logic = require('./logic/logic');
-const { resolveConfig } = require('prettier');
 
 const router = new express.Router();
 

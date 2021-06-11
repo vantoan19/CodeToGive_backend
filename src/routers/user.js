@@ -2,9 +2,7 @@ const express = require('express');
 const User = require('../models/user');
 const authenticate = require('../middleware/authenticate');
 const upload = require('../middleware/upload');
-const sharp = require('sharp');
 const logic = require('./logic/logic');
-const { update } = require('../models/user');
 const Class = require('../models/class');
 
 const router = new express.Router();
