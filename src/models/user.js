@@ -3,14 +3,6 @@ const validator = require('validator');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const taskSchema = new mongoose.Schema({
-    taskID: String,
-    takenDate: Date,
-    score: {
-        type: Number,
-        default: -1
-    }
-});
 
 const userSchema = new mongoose.Schema({
     account: {
@@ -61,7 +53,8 @@ const userSchema = new mongoose.Schema({
     coverPhoto: Buffer,
     profileDescription: {
         type: String,
-        trim: true
+        trim: true,
+        default: "Hello world! :D"
     },
     password: {
         type: String,
@@ -90,7 +83,23 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
-    takenTasks: [taskSchema],
+    takenQuizzes: [{
+        quiz: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: true,
+            refPath: 'quizzes.quizType'
+        },
+        quizType: {
+            type: String,
+            required: true,
+            enum: ['PicQuizz', 'Quiz', 'Skrible']
+        },
+        takeAt: Date,
+        score: {
+            type: Number,
+            default: 0
+        }
+    }],
     badges: [String],
     tokens: [{
         token: {
@@ -104,8 +113,10 @@ userSchema.methods.toJSON = function() {
     const user = this;
     const userObject = user.toObject();
 
-    userObject.avatarURL = process.env.DOMAIN + "users/" + user.account + "/avatar";
-    userObject.coverPhotoURL = process.env.DOMAIN + "users/" + user.account + "/coverPhoto";
+    if (userObject.avatar)
+        userObject.avatarURL = process.env.DOMAIN + "users/" + user.account + "/avatar";
+    if (userObject.coverPhoto)
+        userObject.coverPhotoURL = process.env.DOMAIN + "users/" + user.account + "/coverPhoto";
     delete userObject.password;
     delete userObject.tokens;
     delete userObject.avatar;

@@ -1,6 +1,7 @@
 const express = require('express');
 const userRouter = require('./routers/user');
-const guessPicRouter = require('./routers/pic-quiz');
+const picQuizRouter = require('./routers/pic-quiz');
+const classRouter = require('./routers/class');
 require('./db/connector');
 
 
@@ -17,7 +18,8 @@ app.use((req, res, next) => {
 })
 
 app.use(userRouter);
-app.use(guessPicRouter);
+app.use(picQuizRouter);
+app.use(classRouter);
 
 app.listen(port, () => {
     console.log('Server is up on port', port);

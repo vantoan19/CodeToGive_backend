@@ -57,6 +57,7 @@ const picQuizSchema = new mongoose.Schema({
 });
 
 
+
 picQuizSchema.methods.toJSON = function() {
     const quiz = this;
     const quizObject = quiz.toObject();
@@ -74,6 +75,6 @@ picQuizSchema.methods.toJSON = function() {
     return quizObject;
 }
 
-const PicQuiz = mongoose.model('PicQuiz', picQuizSchema);
+const PicQuiz = mongoose.model('PicQuizz', picQuizSchema);
 
 module.exports = PicQuiz;
