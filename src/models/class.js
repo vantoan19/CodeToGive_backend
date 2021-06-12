@@ -23,7 +23,7 @@ const classSchema = new mongoose.Schema({
         quizType: {
             type: String,
             required: true,
-            enum: ['PicQuizz', 'Quiz', 'Skrible']
+            enum: ['PicQuizz', 'Quiz', 'Skribly']
         }
     }]
 });

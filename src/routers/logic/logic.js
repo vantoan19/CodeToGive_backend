@@ -1,4 +1,5 @@
 const sharp = require('sharp');
+const Class = require('../../models/class');
 
 const imageBufferProcess = async (originBuffer, width) => 
     await sharp(originBuffer).resize({ fit: sharp.fit.contain, width })
@@ -48,6 +49,27 @@ const updateDocument = async (document, updates) => {
     updatesKey.forEach(key => document[key] = updates[key]);
     await document.save();
 }
+
+const createQuiz = async (Model, data) => {
+    const quiz = await createDocument(Model, data);
+
+    quiz.classes.forEach(async classId => {
+        const classDoc = await Class.findOne({ classId });
+        classDoc && await injectQuizToClass(quiz, classDoc);
+    });
+
+    return quiz;
+}
+
+
+const getUserQuizzes = (user) => user.classes.map(async curClass => {
+    classDoc = await Class.findOne({ _id: curClass._id });
+    if (classDoc) {
+        await classDoc.populate('quizList.quiz').execPopulate();
+        return classDoc.quizList;
+    }
+    return [];
+});
  
 module.exports = {
     imageBufferProcess,
@@ -57,5 +79,7 @@ module.exports = {
     injectUserToClass,
     injectParticipantToQuiz,
     createDocument,
-    updateDocument
+    updateDocument,
+    createQuiz,
+    getUserQuizzes
 }

@@ -32,31 +32,17 @@ const deleteQuestionByType = async (questionType, indexes) =>
 const findOneAndPopulateQuiz = async (indexes) => await PicQuizz.findOne(indexes)
                                                                .populate('smallQuestions.info');
 
-const getUserQuizzes = (user) => user.classes.map(async curClass => {
-    classDoc = await Class.findOne({ _id: curClass._id });
-    if (classDoc) {
-        await classDoc.populate('quizList.quiz').execPopulate();
-        return classDoc.quizList;
-    }
-    return [];
-});
     
 
 // @POST /api/pic-quiz/create
 // @Desc Create a pic quiz
 router.post('/api/pic-quiz/create', authenticate, isAdmin, upload.single('bigQuestionImage'), async (req, res) => {
     try {
-        const quiz = await logic.createDocument(PicQuizz, {
+        const quiz = await logic.createQuiz(PicQuizz, {
             ...req.body,
             bigQuestionImage: await logic.imageBufferProcess(req.file.buffer, 1000)
         });
 
-        quiz.classes.forEach(async classId => {
-            //Add quiz to class
-            const classDoc = await Class.findOne({ classId });
-            classDoc && await logic.injectQuizToClass(quiz, classDoc);
-        });
-        
         res.status(201).send({ message: 'Created succesfully', quiz });
     } catch (error) {
         res.status(400).send(error);
@@ -93,14 +79,14 @@ router.post('/api/pic-quiz/:id/new-question', authenticate, isAdmin, upload.sing
 //===================================================================================
 //===================================================================================
 
-// @GET /api/pic-quiz/need-to-do
+// @GET /api/pic-quiz/get-list/:type
 // @Desc Get need to do
 router.get('/api/pic-quiz/get-list/:type', authenticate , async (req, res) => {
     try {
-        req.user.populate('takenQuizzes.quiz').execPopulate();
+        await req.user.populate('takenQuizzes.quiz').execPopulate();
         const takenQuizzes = req.user.takenQuizzes.map(quiz => quiz.quiz._id);
 
-        const allUserQuizzes = await Promise.all(getUserQuizzes(req.user));
+        const allUserQuizzes = await Promise.all(logic.getUserQuizzes(req.user));
 
         const allPicQuizzes = allUserQuizzes.flat().filter(quiz => quiz.quizType === 'PicQuizz');
         if (req.params.type === 'need-to-do') {
@@ -122,21 +108,6 @@ router.get('/api/pic-quiz/get-list/:type', authenticate , async (req, res) => {
     }
 });
 
-// @GET /api/pic-quiz/finished
-// @Desc Get finished task
-router.get('/api/pic-quiz/finished', authenticate, async (req, res) => {
-    try {
-        req.user.populate('takenQuizzes.quiz').execPopulate();
-        const takenQuizzes = req.user.takenQuizzes.map(quiz => quiz.quiz._id);
-        const totalList = getQuizList(req.user).filter(quiz => quiz.quizType === 'PicQuizz');
-
-        const finishedList = req.user.quizzes.filter(quiz => takenQuizzes.includes(quiz.quiz._id));
-
-        res.send({ message: 'Get successfully', quizzes: finishedList });
-    } catch (error) {
-        res.status(400).send(error);
-    }
-});
 
 // @GET /api/pic-quiz/:id
 // @Desc Get quiz information by id

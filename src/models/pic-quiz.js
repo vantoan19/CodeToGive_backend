@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const picQuizSchema = new mongoose.Schema({
+const PicQuizzSchema = new mongoose.Schema({
     quizType: {
         type: String,
         default: 'PicQuizz'
@@ -45,7 +45,7 @@ const picQuizSchema = new mongoose.Schema({
             enum: ['MultipleChoiceQuestion', 'FillInBlankQuestion']
         }
     }],
-    participants: [{
+    studentWorks: [{
         participant: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
@@ -58,7 +58,7 @@ const picQuizSchema = new mongoose.Schema({
 
 
 
-picQuizSchema.methods.toJSON = function() {
+PicQuizzSchema.methods.toJSON = function() {
     const quiz = this;
     const quizObject = quiz.toObject();
     
@@ -75,6 +75,6 @@ picQuizSchema.methods.toJSON = function() {
     return quizObject;
 }
 
-const PicQuiz = mongoose.model('PicQuizz', picQuizSchema);
+const PicQuizz = mongoose.model('PicQuizz', PicQuizzSchema);
 
-module.exports = PicQuiz;
+module.exports = PicQuizz;

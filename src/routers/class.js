@@ -10,7 +10,7 @@ const router = express.Router();
 
 const getQuizByType = async (quizType, indexes) => {
     if (quizType === 'PicQuizz')
-        return await PicQuizz.findOne(indexes)
+        return await PicQuizz.findOne(indexes);
     // else if( quizType === 'Skrible')
     //     return await Skrible.findOne(indexes);
     // else
@@ -22,7 +22,7 @@ const getQuizByType = async (quizType, indexes) => {
 router.post('/api/class/create', authenticate, isAdmin, async (req, res) => {
     try {
         const classDoc = await logic.createDocument(Class, req.body);
-        
+
         res.send({ message: 'Created succesfully', classDoc });
     } catch (error) {
         res.status(400).send(error);
@@ -94,9 +94,10 @@ router.get('/api/class/:classId/quizzes', async (req, res) => {
     try {
         const classDoc = await Class.findOne({ classId: req.params.classId })
                                     .populate('quizList.quiz');
-        console.log(classDoc);
+        
         if (!classDoc)
             throw new Error('Not found');
+        
 
         res.send({ message: 'Get successfully', quizzes: classDoc.quizList });
     } catch (error) {
