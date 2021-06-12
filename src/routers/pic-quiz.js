@@ -57,7 +57,8 @@ router.post('/api/pic-quiz/:id/new-question', authenticate, isAdmin, upload.sing
     let concreteQuestion = getDocumentByType(req.body.questionType, req.body);
 
     try {
-        concreteQuestion.questionImage = await logic.imageBufferProcess(req.file.buffer, 1000);
+        if (req.file.buffer)
+            concreteQuestion.questionImage = await logic.imageBufferProcess(req.file.buffer, 1000);
         await concreteQuestion.save();
 
         //Link question to current quiz

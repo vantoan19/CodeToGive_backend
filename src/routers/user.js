@@ -65,7 +65,8 @@ router.post('/api/users/logoutall', authenticate, async(req, res) => {
 // @Desc Update avatar
 router.post('/api/users/me/avatar', authenticate, upload.single('avatar'),  async (req, res) => {
     try {
-        req.user.avatar = await logic.imageBufferProcess(req.file.buffer, 250);
+        if (req.file.buffer)
+            req.user.avatar = await logic.imageBufferProcess(req.file.buffer, 250);
         await req.user.save();
 
         res.send({ message: 'Updated avatar successfully' });
@@ -81,7 +82,8 @@ router.post('/api/users/me/avatar', authenticate, upload.single('avatar'),  asyn
 // @Desc Update cover photo
 router.post('/api/users/me/coverPhoto', authenticate, upload.single('coverPhoto'), async (req, res) => {
     try {
-        req.user.coverPhoto = await logic.imageBufferProcess(req.file.buffer, 1000);
+        if (req.file.buffer)
+            req.user.coverPhoto = await logic.imageBufferProcess(req.file.buffer, 1000);
         await req.user.save();
 
         res.send({ message: 'Updated coverphoto successfully' });

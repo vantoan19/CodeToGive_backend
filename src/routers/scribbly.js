@@ -30,9 +30,11 @@ router.post('/api/scribbly/submit/:quizId', authenticate, upload.single('student
         if (!quiz)
             return res.status(404).send({ error: 'Quiz not found' });
 
+        if (req.file.buffer)
+            req.body.studentWork = await logic.imageBufferProcess(req.file.buffer, 1000);
+
         const studentWork = await logic.createDocument(ScribblyStudentWork, {
             ...req.body,
-            studentWork: await logic.imageBufferProcess(req.file.buffer, 1000),
             author: [ req.user ]
         });
 
@@ -84,7 +86,12 @@ router.get('/api/scribbly/need-to-do', authenticate, async (req, res) => {
         const needToDoList = allSkribleQuizzes.filter(quiz => !takenQuizzes.includes(quiz.quiz._id))
                                               .map(quiz => quiz.quiz);
         
-        res.send({ message: 'Get succesfully', quizzes: needToDoList });
+        needToDoListObj = needToDoList.map(quiz => quiz.toJSON());
+        needToDoListObj.forEach(quiz => {
+            quiz.status = 'to-do';
+        })
+
+        res.send({ message: 'Get succesfully', quizzes: needToDoListObj });
     } catch (error) {
         console.log(error);
         res.status(400).send(error);
@@ -102,6 +109,7 @@ router.get('/api/scribbly/finished', authenticate, async (req, res) => {
 
         const finished = allSkribleQuizzes.filter(quiz => takenQuizzes.includes(quiz.quiz._id))
                                               .map(quiz => quiz.quiz);
+        
         await ScribblyQuiz.populate(finished, { 
             path: 'studentWorks',
             populate: { 
@@ -109,9 +117,37 @@ router.get('/api/scribbly/finished', authenticate, async (req, res) => {
                 select: 'account firstName lastName'
             }
         });
-        res.send({ message: 'Get succesfully', quizzes: finished });
+
+        finishedObj = finished.map(quiz => quiz.toObject());
+        
+        finishedObj.forEach(quiz => {
+            quiz.status = 'finished';
+            quiz.studentWorks.forEach(work => {
+                work.isHahaVoted = work.hahaReact.some(id => JSON.stringify(id) === JSON.stringify(req.user._id));
+                work.isWowVoted = work.wowReact.some(id => JSON.stringify(id) === JSON.stringify(req.user._id));
+                work.isLoveVoted = work.loveReact.some(id => JSON.stringify(id) === JSON.stringify(req.user._id));
+ 
+
+                if (work.studentWork)
+                    work.studentWorkURL = `${process.env.DOMAIN}api/scribbly-work/img/${work._id}`;
+                delete work.studentWork;
+                work.loveReact = work.loveReact.length;
+                work.hahaReact = work.hahaReact.length;
+                work.wowReact = work.wowReact.length;
+
+                work.loveReactAPI_URL = `${process.env.DOMAIN}api/scribbly/react/loveReact/${work._id}`;
+                work.wowReactAPI_URL = `${process.env.DOMAIN}api/scribbly/react/wowReact/${work._id}`;
+                work.hahaReactAPI_URL = `${process.env.DOMAIN}api/scribbly/react/hahaReact/${work._id}`;
+            });
+            quiz.myWork = quiz.studentWorks.find(work => work.author.some(auth => auth.account === req.user.account));
+            quiz.classmateWork = quiz.studentWorks.filter(work => !work.author.some(auth => auth.account === req.user.account));
+            delete quiz.studentWorks;
+        })
+
+        res.send({ message: 'Get succesfully', quizzes: finishedObj });
     } catch (error) {
-        req.status(400).send(error);
+        console.log(error);
+        res.status(400).send(error);
     }
 });
 
