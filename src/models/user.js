@@ -92,7 +92,7 @@ const userSchema = new mongoose.Schema({
         quizType: {
             type: String,
             required: true,
-            enum: ['PicQuizz', 'Quiz', 'Skribly']
+            enum: ['PicQuizz', 'Quiz', 'Scribbly']
         },
         takeAt: Date,
         score: {
@@ -114,9 +114,9 @@ userSchema.methods.toJSON = function() {
     const userObject = user.toObject();
 
     if (userObject.avatar)
-        userObject.avatarURL = process.env.DOMAIN + "users/" + user.account + "/avatar";
+        userObject.avatarURL = process.env.DOMAIN + "api/users/" + user.account + "/avatar";
     if (userObject.coverPhoto)
-        userObject.coverPhotoURL = process.env.DOMAIN + "users/" + user.account + "/coverPhoto";
+        userObject.coverPhotoURL = process.env.DOMAIN + "api/users/" + user.account + "/coverPhoto";
     delete userObject.password;
     delete userObject.tokens;
     delete userObject.avatar;

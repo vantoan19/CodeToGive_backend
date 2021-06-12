@@ -3,7 +3,7 @@ const multer = require('multer');
 const userRouter = require('./routers/user');
 const picQuizRouter = require('./routers/pic-quiz');
 const classRouter = require('./routers/class');
-const skiriblyRouter = require('./routers/skribly');
+const skiriblyRouter = require('./routers/scribbly');
 require('./db/connector');
 
 const upload = multer();

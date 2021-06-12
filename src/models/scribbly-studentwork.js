@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const skriblyStudentWorkSchema = new mongoose.Schema({
+const scribblyStudentWorkSchema = new mongoose.Schema({
     studentWork: {
         type: Buffer,
         required: true
@@ -34,6 +34,6 @@ const skriblyStudentWorkSchema = new mongoose.Schema({
     }]
 });
 
-const SkriblyStudentWork = mongoose.model('SkriblyStudentWork', skriblyStudentWorkSchema);
+const ScribblyStudentWork = mongoose.model('ScribblyStudentWork', scribblyStudentWorkSchema);
 
-module.exports = SkriblyStudentWork;
+module.exports = ScribblyStudentWork;

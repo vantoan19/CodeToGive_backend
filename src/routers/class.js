@@ -11,8 +11,8 @@ const router = express.Router();
 const getQuizByType = async (quizType, indexes) => {
     if (quizType === 'PicQuizz')
         return await PicQuizz.findOne(indexes);
-    // else if( quizType === 'Skrible')
-    //     return await Skrible.findOne(indexes);
+    // else if( quizType === 'Scribbly')
+    //     return await Scribbly.findOne(indexes);
     // else
     //     return await quizType.findOne(indexes);
 }

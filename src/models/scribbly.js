@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-const skriblySchema = new mongoose.Schema({
+const ScribblySchema = new mongoose.Schema({
     quizType: {
         type: String,
-        default: 'Skribly'
+        default: 'Scribbly'
     },
     quizId: {
         type: String,
@@ -14,7 +14,7 @@ const skriblySchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    skribleType: {
+    scribblyType: {
         type: String,
         default: 'individual'
     },
@@ -28,30 +28,30 @@ const skriblySchema = new mongoose.Schema({
     taksDescription: String,
     studentWorks: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'SkriblyStudentWork'
+        ref: 'ScribblyStudentWork'
     }]
 });
 
-skriblySchema.methods.toJSON = function() {
+ScribblySchema.methods.toJSON = function() {
     const quiz = this;
     const quizObject = quiz.toObject();
     
     quizObject.studentWorks.forEach(work => {
         if (work.studentWork)
-            work.studentWorkURL = `${process.env.DOMAIN}api/skribly-work/img/${work._id}`;
+            work.studentWorkURL = `${process.env.DOMAIN}api/scribbly-work/img/${work._id}`;
         delete work.studentWork;
         work.loveReact = work.loveReact.length;
         work.hahaReact = work.hahaReact.length;
         work.wowReact = work.wowReact.length;
 
-        work.loveReactAPI_URL = `${process.env.DOMAIN}api/skribly/react/loveReact/${work._id}`;
-        work.wowReactAPI_URL = `${process.env.DOMAIN}api/skribly/react/wowReact/${work._id}`;
-        work.hahaReactAPI_URL = `${process.env.DOMAIN}api/skribly/react/hahaReact/${work._id}`;
+        work.loveReactAPI_URL = `${process.env.DOMAIN}api/scribbly/react/loveReact/${work._id}`;
+        work.wowReactAPI_URL = `${process.env.DOMAIN}api/scribbly/react/wowReact/${work._id}`;
+        work.hahaReactAPI_URL = `${process.env.DOMAIN}api/scribbly/react/hahaReact/${work._id}`;
     });
 
     return quizObject;
 }
 
-const SkriblyQuiz = mongoose.model('Skribly', skriblySchema);
+const ScribblyQuiz = mongoose.model('Scribbly', ScribblySchema);
 
-module.exports = SkriblyQuiz;
+module.exports = ScribblyQuiz;
