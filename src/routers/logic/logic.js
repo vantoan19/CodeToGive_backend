@@ -63,7 +63,7 @@ const createQuiz = async (Model, data) => {
 
 
 const getUserQuizzes = (user) => user.classes.map(async curClass => {
-    classDoc = await Class.findOne({ _id: curClass._id });
+    const classDoc = await Class.findOne({ _id: curClass._id });
     if (classDoc) {
         await classDoc.populate('quizList.quiz').execPopulate();
         return classDoc.quizList;

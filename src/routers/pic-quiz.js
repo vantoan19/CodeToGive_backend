@@ -87,7 +87,6 @@ router.get('/api/pic-quiz/get-list/:type', authenticate , async (req, res) => {
         const takenQuizzes = req.user.takenQuizzes.map(quiz => quiz.quiz._id);
 
         const allUserQuizzes = await Promise.all(await logic.getUserQuizzes(req.user));
-
         const allPicQuizzes = allUserQuizzes.flat().filter(quiz => quiz.quizType === 'PicQuizz');
         if (req.params.type === 'need-to-do') {
             const needToDoList = allPicQuizzes.filter(quiz => !takenQuizzes.includes(quiz.quiz._id))
