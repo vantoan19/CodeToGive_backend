@@ -19,7 +19,7 @@ const multipleChoiceQuestionSchema = new mongoose.Schema({
 });
 
 multipleChoiceQuestionSchema.methods.toJSON = function() {
-    question = this
+    question = this;
 
     questionObject = question.toObject();
     if (questionObject.questionImage) {

@@ -25,7 +25,7 @@ const ScribblySchema = new mongoose.Schema({
     maxTime: Number,
     dueDate: Date,
     classes: [String],
-    taksDescription: String,
+    taksDescription: [String],
     studentWorks: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ScribblyStudentWork'

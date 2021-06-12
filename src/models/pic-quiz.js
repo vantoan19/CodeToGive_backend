@@ -46,13 +46,8 @@ const PicQuizzSchema = new mongoose.Schema({
         }
     }],
     studentWorks: [{
-        participant: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        },
-        score: Number,
-        takenDate: Date,
-        duration: Number
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PicQuizzStudentWork'
     }]
 });
 

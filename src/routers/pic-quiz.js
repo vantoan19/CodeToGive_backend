@@ -4,6 +4,7 @@ const authenticate = require('../middleware/authenticate');
 const upload = require('../middleware/upload');
 const isAdmin = require('../middleware/is-admin');
 const PicQuizz = require('../models/pic-quiz');
+const PicQuizzStudentWork = require('../models/pic-quiz-studentwork');
 const FillInBlankQuestion = require('../models/fill-in-blank-question');
 const MultipleChoiceQuestion = require('../models/multiple-choice-question');
 const Class = require('../models/class');
@@ -74,7 +75,29 @@ router.post('/api/pic-quiz/:id/new-question', authenticate, isAdmin, upload.sing
     }
 });
 
+// @POST /api/pic-quiz/submit/:quizId
+// @Desc Submit pic quiz
+router.post('/api/pic-quiz/submit/:quizId', authenticate, async (req, res) => {
+    try {
+        const quiz = await PicQuizz.findOne({ quizId: req.params.quizId });
+        const work = await logic.createDocument(PicQuizzStudentWork, {
+            ...req.body,
+            author: req.user
+        });
 
+        quiz.studentWorks.push(work);
+        req.user.takenQuizzes.push({
+            quiz,
+            quizType: 'PicQuizz'
+        });
+        await quiz.save();
+        await req.user.save();
+
+        res.send({ message: 'Submit succesfully' });
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
 
 //===================================================================================
 //===================================================================================
@@ -98,6 +121,12 @@ router.get('/api/pic-quiz/get-list/:type', authenticate , async (req, res) => {
             const finished = allPicQuizzes.filter(quiz => takenQuizzes.includes(quiz.quiz._id))
                                               .map(quiz => quiz.quiz);
             await PicQuizz.populate(finished, { path: 'smallQuestions.info'});
+            await PicQuizz.populate(finished, {
+                path: 'studentWorks',
+                populate: {
+                    path: 'author'
+                }
+            })
 
             res.send({ message: 'Get succesfully', quizzes: finished });
         }
