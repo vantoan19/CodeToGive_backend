@@ -78,7 +78,7 @@ router.get('/api/scribbly/need-to-do', authenticate, async (req, res) => {
     try {
         await req.user.populate('takenQuizzes.quiz').execPopulate();
         const takenQuizzes = req.user.takenQuizzes.map(quiz => quiz.quiz._id);
-        const allUserQuizzes = await Promise.all(logic.getUserQuizzes(req.user));
+        const allUserQuizzes = await Promise.all(await logic.getUserQuizzes(req.user));
         const allSkribleQuizzes = allUserQuizzes.flat().filter(quiz => quiz.quizType === 'Scribbly');
 
         const needToDoList = allSkribleQuizzes.filter(quiz => !takenQuizzes.includes(quiz.quiz._id))
@@ -97,7 +97,7 @@ router.get('/api/scribbly/finished', authenticate, async (req, res) => {
     try {
         await req.user.populate('takenQuizzes.quiz').execPopulate();
         const takenQuizzes = req.user.takenQuizzes.map(quiz => quiz.quiz._id);
-        const allUserQuizzes = await Promise.all(logic.getUserQuizzes(req.user));
+        const allUserQuizzes = await Promise.all(await logic.getUserQuizzes(req.user));
         const allSkribleQuizzes = allUserQuizzes.flat().filter(quiz => quiz.quizType === 'Scribbly');
 
         const finished = allSkribleQuizzes.filter(quiz => takenQuizzes.includes(quiz.quiz._id))
