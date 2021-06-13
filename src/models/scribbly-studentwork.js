@@ -17,6 +17,10 @@ const scribblyStudentWorkSchema = new mongoose.Schema({
         type: Number,
         default: -1
     },
+    tryCount: {
+        type: Number,
+        default: 1
+    },
     teacherComment: String,
     takenDate: Date,
     duration: Number,

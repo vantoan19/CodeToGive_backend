@@ -78,12 +78,25 @@ router.post('/api/pic-quiz/:id/new-question', authenticate, isAdmin, upload.sing
 
 // @POST /api/pic-quiz/submit/:quizId
 // @Desc Submit pic quiz
-router.post('/api/pic-quiz/submit/:quizId', authenticate, async (req, res) => {
+router.post('/api/pic-quiz/submit/:quizId', authenticate, upload.none(), async (req, res) => {
     try {
         const quiz = await PicQuizz.findOne({ quizId: req.params.quizId });
+        if (!quiz)
+            return res.status(404).send({ error: 'Not found' });
+        await quiz.populate({
+            path: 'studentWorks',
+            populate: {
+                path: 'author',
+                select: 'account'
+            }
+        }).execPopulate();
+
+        const curTry = quiz.studentWorks.filter(work => work.author.account === req.user.account).length + 1;
+
         const work = await logic.createDocument(PicQuizzStudentWork, {
             ...req.body,
-            author: req.user
+            author: req.user,
+            tryCount: curTry
         });
 
         quiz.studentWorks.push(work);
@@ -117,19 +130,23 @@ router.get('/api/pic-quiz/get-list/:type', authenticate , async (req, res) => {
                                               .map(quiz => quiz.quiz);
             await PicQuizz.populate(needToDoList, { path: 'smallQuestions.info'});
 
-            res.send({ message: 'Get succesfully', quizzes: needToDoList });
+            needToDoObj = needToDoList.map(quiz => quiz.toJSON());
+            needToDoObj.forEach(quiz => {
+                quiz.status = 'to-do';
+            });
+
+            res.send({ message: 'Get succesfully', quizzes: needToDoObj });
         } else {
             const finished = allPicQuizzes.filter(quiz => takenQuizzes.includes(quiz.quiz._id))
                                               .map(quiz => quiz.quiz);
             await PicQuizz.populate(finished, { path: 'smallQuestions.info'});
-            await PicQuizz.populate(finished, {
-                path: 'studentWorks',
-                populate: {
-                    path: 'author'
-                }
-            })
 
-            res.send({ message: 'Get succesfully', quizzes: finished });
+            finishedObj = finished.map(quiz => quiz.toJSON());
+            finishedObj.forEach(quiz => {
+                quiz.status = 'finished';
+            });
+
+            res.send({ message: 'Get succesfully', quizzes: finishedObj });
         }
     } catch (error) {
         console.log(error);
@@ -198,8 +215,6 @@ router.get('/api/question/:questionType/:id', async (req, res) => {
 //===================================================================================
 //===================================================================================
 
-
-
 // @PATCH /api/pic-quiz/:id
 // @Desc Modify quiz by id
 router.patch('/api/pic-quiz/:id', authenticate, isAdmin, upload.single('bigQuestionImage'), async (req, res) => {
@@ -208,7 +223,9 @@ router.patch('/api/pic-quiz/:id', authenticate, isAdmin, upload.single('bigQuest
 
     try {
         const quiz = await PicQuizz.findOne({ quizId: req.params.id });
-        
+        if (!quiz)
+            res.status(404).send('Not found');
+
         if (req.file) 
             req.body.bigQuestionImage = await logic.imageBufferProcess(req.file.buffer, 1000);
         await logic.updateDocument(quiz, req.body);

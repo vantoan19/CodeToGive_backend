@@ -12,7 +12,11 @@ const picQuizStudentWorkSchema = new mongoose.Schema({
     },
     teacherComment: String,
     takenDate: Date,
-    duration: Number
+    duration: Number,
+    tryCount: {
+        type: Number,
+        default: 1
+    }
 });
 
 const PicQuizzStudentWork = mongoose.model('PicQuizzStudentWork', picQuizStudentWorkSchema);

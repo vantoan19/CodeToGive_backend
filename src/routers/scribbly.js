@@ -11,7 +11,6 @@ const router = express.Router();
 // @POST /api/scribbly/create
 // @Desc Create a scribbly quiz
 router.post('/api/scribbly/create', authenticate, isAdmin, upload.none(), async (req, res) => {
-    console.log(req.body);
     try {
         const quiz = await logic.createQuiz(ScribblyQuiz, req.body);
 
@@ -59,7 +58,7 @@ router.post('/api/scribbly/react/:reactType/:workId', authenticate, async (req, 
     try {
         const work = await ScribblyStudentWork.findOne({ _id: req.params.workId });
         if (!work)
-            req.status(404).send({ error: 'Not found' });
+            return req.status(404).send({ error: 'Not found' });
 
         if (work[req.params.reactType].includes(req.user._id)) {
             work[req.params.reactType] = work[req.params.reactType].filter(curUser => curUser.str !== req.user._id.str);
@@ -126,7 +125,9 @@ router.get('/api/scribbly/finished', authenticate, async (req, res) => {
                 work.isHahaVoted = work.hahaReact.some(id => JSON.stringify(id) === JSON.stringify(req.user._id));
                 work.isWowVoted = work.wowReact.some(id => JSON.stringify(id) === JSON.stringify(req.user._id));
                 work.isLoveVoted = work.loveReact.some(id => JSON.stringify(id) === JSON.stringify(req.user._id));
- 
+                work.author.forEach(auth => {
+                    auth.avatarURL = process.env.DOMAIN + "api/users/" + auth.account + "/avatar";
+                });
 
                 if (work.studentWork)
                     work.studentWorkURL = `${process.env.DOMAIN}api/scribbly-work/img/${work._id}`;
@@ -169,6 +170,8 @@ router.get('/api/scribbly/:id', async (req, res) => {
     }
 });
 
+// @GET /api/scribbly-work/img/:workId
+// @Desc Get work's image
 router.get('/api/scribbly-work/img/:workId', async (req, res) => {
     try {
         const work = await ScribblyStudentWork.findOne({ _id: req.params.workId });
@@ -179,6 +182,25 @@ router.get('/api/scribbly-work/img/:workId', async (req, res) => {
         res.set('Content-Type', 'image/png');
         res.send(work.studentWork);
     } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
+// @PATCH /api/scribbly/:quizId
+// @Desc Modify quiz by id
+router.patch('/api/scribbly/:quizId', authenticate, isAdmin, upload.none(), async (req, res) => {
+    if (Object.keys(req.body).includes('quizId')) 
+        return res.status(400).send({ error: 'Invalid update!' });
+
+    try {
+        const quiz = await ScribblyQuiz.findOne({ quizId: req.params.quizId });
+        if (!quiz)
+            return res.status(404).send({ error: 'Not found' });
+        await logic.updateDocument(quiz, req.body);
+
+        res.send({ message: 'Updated successfully' });
+    } catch (error) {
+        console.log(error);
         res.status(400).send(error);
     }
 });
