@@ -25,7 +25,7 @@ const ScribblySchema = new mongoose.Schema({
     maxTime: Number,
     dueDate: Date,
     classes: [String],
-    taksDescription: [String],
+    taskDescription: [String],
     studentWorks: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'ScribblyStudentWork'
@@ -36,7 +36,7 @@ ScribblySchema.methods.toJSON = function() {
     const quiz = this;
     const quizObject = quiz.toObject();
     
-    quizObject.studentWorks.forEach(work => {
+    quiz.populated('studentWorks') && quizObject.studentWorks.forEach(work => {
         if (work.studentWork)
             work.studentWorkURL = `${process.env.DOMAIN}api/scribbly-work/img/${work._id}`;
         delete work.studentWork;
