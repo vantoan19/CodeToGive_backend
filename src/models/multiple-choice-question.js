@@ -18,17 +18,6 @@ const multipleChoiceQuestionSchema = new mongoose.Schema({
     options: [String]
 });
 
-multipleChoiceQuestionSchema.methods.toJSON = function() {
-    question = this;
-
-    questionObject = question.toObject();
-    if (questionObject.questionImage) {
-        questionObject.questiionImageURL = process.env.DOMAIN + "/api/question/" + questionObject._id;
-    }
-    delete questionObject.questionImage;
-
-    return questionObject;
-}
 
 const MultipleChoiceQuestion = mongoose.model('MultipleChoiceQuestion', multipleChoiceQuestionSchema);
 

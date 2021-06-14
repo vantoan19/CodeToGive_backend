@@ -20,7 +20,7 @@ const PicQuizzSchema = new mongoose.Schema({
     numberOfAttempt: Number,
     maxTime: Number,
     dueDate: Date,
-    classes: [String],
+    class: String,
     bigQuestion: {
         type: String,
         required: true
@@ -59,12 +59,11 @@ PicQuizzSchema.methods.toJSON = function() {
     
     quizObject.bigQuestionImageURL = `${process.env.DOMAIN}api/pic-quiz/${quiz.quizId}/image`;;
     quizObject.smallQuestions.forEach(question => {
-        if (question.info.questionImage) 
+        if (question.info.questionImage)
             question.info.questionImageURL = `${process.env.DOMAIN}api/question/${question.info.questionType}/${question.info._id}`;
         question.info.updateQuestionAPI_URL = `${process.env.DOMAIN}api/pic-quiz/${quiz.quizId}/${question.info.questionType}/${question.info._id}`;
         delete question.info.questionImage;
-    })
-
+    });
     delete quizObject.bigQuestionImage;
 
     return quizObject;

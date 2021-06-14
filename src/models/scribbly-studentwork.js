@@ -1,17 +1,18 @@
 const mongoose = require('mongoose');
 
 const scribblyStudentWorkSchema = new mongoose.Schema({
-    studentWork: {
-        type: Buffer,
-        required: true
-    },
+    studentWork: Buffer,
     author: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     }],
-    curStudent: {
+    curTaskDesc: {
         type: Number,
         default: 0
+    },
+    status: {
+        type: String,
+        default: 'free'
     },
     score: {
         type: Number,

@@ -5,17 +5,10 @@ const Class = require('../models/class');
 const PicQuizz = require('../models/pic-quiz');
 const User = require('../models/user');
 const logic = require('./logic/logic');
+const classLogic = require('./logic/class-logic');
 
 const router = express.Router();
 
-const getQuizByType = async (quizType, indexes) => {
-    if (quizType === 'PicQuizz')
-        return await PicQuizz.findOne(indexes);
-    // else if( quizType === 'Scribbly')
-    //     return await Scribbly.findOne(indexes);
-    // else
-    //     return await quizType.findOne(indexes);
-}
 
 // @POST /api/class/create
 // @Desc Create a class
@@ -23,7 +16,10 @@ router.post('/api/class/create', authenticate, isAdmin, async (req, res) => {
     try {
         const classDoc = await logic.createDocument(Class, req.body);
 
-        res.send({ message: 'Created succesfully', classDoc });
+        res.send({ 
+            message: 'Created succesfully', 
+            classDoc 
+        });
     } catch (error) {
         res.status(400).send(error);
     }
@@ -33,18 +29,22 @@ router.post('/api/class/create', authenticate, isAdmin, async (req, res) => {
 // @Desc Add an account to a class
 router.post('/api/class/:classId/add-student/:account', async (req, res) => {
     try {
-        const classDoc = await Class.findOne({ classId: req.params.classId });
-        const student = await User.findOne({ account: req.params.account });
+        const classDoc = await Class.findOne({ 
+            classId: req.params.classId 
+        });
+        const student = await User.findOne({ 
+            account: req.params.account 
+        });
 
         if (!classDoc || !student)
             throw new Error('Not found');
 
-        student.classes.push(classDoc);
-        classDoc.studentList.push(student);
+        await logic.injectClassInformationToStudent(classDoc, student);
+        await logic.injectStudentToClass(student, classDoc);
 
-        await student.save();
-        await classDoc.save();
-        res.send({ message: 'Added succesfully' });
+        res.send({ 
+            message: 'Added succesfully' 
+        });
     } catch (error) {
         res.status(404).send(error);
     }
@@ -54,19 +54,22 @@ router.post('/api/class/:classId/add-student/:account', async (req, res) => {
 // @Desc Remove an account from a class
 router.post('/api/class/:classId/remove-student/:account', async (req, res) => {
     try {
-        const classDoc = await Class.findOne({ classId: req.params.classId });
-        const student = await User.findOne({ account: req.params.account });
+        const classDoc = await Class.findOne({ 
+            classId: req.params.classId 
+        });
+        const student = await User.findOne({ 
+            account: req.params.account 
+        });
 
         if (!classDoc || !student)
             throw new Error('Not found');
 
-        student.classes = student.classes.filter(curClass => curClass.str !== classDoc._id.str);
-        classDoc.studentList = classDoc.studentList.filter(curStudent => curStudent.str !== student._id.str);
+        await logic.removeClassInformationFromStudent(classDoc, student);
+        await logic.removeStudentFromClass(student, classDoc);
 
-        await student.save();
-        await classDoc.save();
-
-        res.send({ message: 'Removed succesfully' });
+        res.send({ 
+            message: 'Removed succesfully' 
+        });
     } catch (error) {
         res.status(404).send(error);
     }
@@ -82,7 +85,10 @@ router.get('/api/class/:classId', async (req, res) => {
         if (!classDoc)
             throw new Error('Not found');
 
-        res.send({ message: 'Get successfully', class: classDoc });
+        res.send({
+            message: 'Get successfully', 
+            class: classDoc 
+        });
     } catch (error) {
         res.status(400).send(error);
     }
@@ -99,9 +105,11 @@ router.get('/api/class/:classId/quizzes', async (req, res) => {
             throw new Error('Not found');
         
 
-        res.send({ message: 'Get successfully', quizzes: classDoc.quizList });
+        res.send({ 
+            message: 'Get successfully', 
+            quizzes: classDoc.quizList 
+        });
     } catch (error) {
-        console.log(error);
         res.status(400).send(error);
     }
 });
@@ -111,14 +119,20 @@ router.get('/api/class/:classId/quizzes', async (req, res) => {
 // @Desc Update class
 router.patch('/api/class/:classId', authenticate, isAdmin, async (req, res) => {
     try {
-        const classDoc = await Class.findOne({ classId: req.params.classId });
+        const classDoc = await Class.findOne({ 
+            classId: req.params.classId 
+        });
 
         if (Object.keys(req.body).includes('classId')) 
-            return res.status(400).send({ error: 'Invalid update' });
+            return res.status(400).send({ 
+                error: 'Invalid update' 
+            });
 
         await logic.updateDocument(classDoc, req.body);
 
-        res.send({ message: 'Updated succesfully' });
+        res.send({ 
+            message: 'Updated succesfully' 
+        });
     } catch (error) {
         res.send(400).send(error);
     }
@@ -130,11 +144,16 @@ router.patch('/api/class/:classId', authenticate, isAdmin, async (req, res) => {
 // @Desc Delete class
 router.delete('/api/class/:classId', authenticate, isAdmin, async (req, res) => {
     try {
-        const classDoc = await Class.findOneAndDelete({ classId: req.params.classId });
+        const classDoc = await Class.findOneAndDelete({ 
+            classId: req.params.classId 
+        });
 
         if (!classDoc) 
-            return res.status(404).send({ error: 'Not found' });
-
+            return res.status(404).send({ 
+                error: 'Not found' 
+            });
+        
+        //Delete the class from students' class list
         classDoc.studentList.forEach(async student => {
             const studentDoc = await User.findOne({ _id: student._id });
             studentDoc && logic.updateDocument(studentDoc, {
@@ -142,13 +161,16 @@ router.delete('/api/class/:classId', authenticate, isAdmin, async (req, res) => 
             });
         });
 
+        //Delete all the quiz of the class
         classDoc.quizList.forEach(async quiz => {
-            const quizDoc = await getQuizByType(quiz.quizType, { _id: quiz.quiz._id });
-            quizDoc && await logic.updateDocument(quizDoc, {
-                classes: quizDoc.classes.filter(curClass => curClass != classDoc.classId)
-            });
+            const quizDoc = await classLogic.getQuizByType(quiz.quizType, { _id: quiz.quiz._id });
+            await quizDoc.remove();
         });
         
+
+        res.send({
+            message: 'Deleted succesfully'
+        })
     } catch (error) {
         res.status(400).send(error);
     }

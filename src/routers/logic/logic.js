@@ -8,9 +8,18 @@ const imageBufferProcess = async (originBuffer, width) =>
 
 
 const injectQuizToUser = async (quizDoc, userDoc) => {
-    userDoc.quizzes.push({
-        quiz: quizDoc,
-        quizType: quizDoc.quizType
+    if (userDoc.takenQuizzes.every(quiz => JSON.stringify(quiz.quiz._id) !== JSON.stringify(quizDoc._id.str))) {
+        userDoc.takenQuizzes.push({
+            quiz: quizDoc,
+            quizType: quizDoc.quizType
+        });
+        await userDoc.save();
+    } 
+}
+
+const removeQuizFromUser = async (quizDoc, userDoc) => {
+    userDoc.takenQuizzes = userDoc.takenQuizzes.filter(quiz => {
+        return quiz.quiz !== quizDoc;
     });
     await userDoc.save();
 }
@@ -23,17 +32,57 @@ const injectQuizToClass = async (quizDoc, classDoc) => {
     await classDoc.save();
 }
 
+const removeQuizFromClass = async (quizDoc, classDoc) => {
+    classDoc.quizList = classDoc.quizList.filter(quiz => {
+        return quiz.quiz !== quizDoc;
+    });
+    await classDoc.save();
+}
+
 const injectUserToClass = async (userDoc, classDoc) => {
     classDoc.studentList.push(userDoc);
     await classDoc.save();
 }
 
-const injectParticipantToQuiz = async (userDoc, quizDoc, score, takenDate, duration) => {
-    quizDoc.participants.push({
-        participant: userDoc,
-        score,
-        takenDate,
-        duration
+const removeUserFromClass = async (userDoc, classDoc) => {
+    classDoc.studentList = classDoc.studentList.filter(user => {
+        return user !== userDoc;
+    });
+    await classDoc.save();
+}
+
+const injectStudentworkToQuiz = async (studentworkDoc, quizDoc) => {
+    quizDoc.studentWorks.push(studentworkDoc);
+    await quizDoc.save();
+}
+
+const removeStudentworkFromQuiz = async (studentworkDoc, quizDoc) => {
+    quizDoc.studentWorks = quizDoc.studentWorks.filter(work => {
+        return work !== studentworkDoc;
+    });
+    await quizDoc.save();
+}
+
+const injectClassInformationToStudent = async (classDoc, studentDoc) => {
+    studentDoc.classes.push(classDoc);
+    await studentDoc.save();
+}
+
+const removeClassInformationFromStudent = async (classDoc, studentDoc) => {
+    studentDoc.classes = studentDoc.classes.filter(curClass => {
+        return curClass !== classDoc;
+    });
+    await studentDoc.save();
+}
+
+const injectStudentToClass = async (studentDoc, classDoc) => {
+    classDoc.studentList.push(studentDoc);
+    await classDoc.save();
+}
+
+const removeStudentFromClass = async (studentDoc, classDoc) => {
+    classDoc.studentList = classDoc.studentList.filter(student => {
+        return student !== studentDoc;
     });
     await classDoc.save();
 }
@@ -53,33 +102,70 @@ const updateDocument = async (document, updates) => {
 const createQuiz = async (Model, data) => {
     const quiz = await createDocument(Model, data);
 
-    quiz.classes.forEach(async classId => {
-        const classDoc = await Class.findOne({ classId });
-        classDoc && await injectQuizToClass(quiz, classDoc);
-    });
+    const classDoc = await Class.findOne({ classId: quiz.class });
+    if (!classDoc) {
+        quiz.remove();
+        throw new Error('Class does not exist!');
+    }
+    await injectQuizToClass(quiz, classDoc);
 
     return quiz;
 }
 
 
 const getUserQuizzes = (user) => user.classes.map(async curClass => {
-    const classDoc = await Class.findOne({ _id: curClass._id });
+    const classDoc = await Class.findOne({ 
+        _id: curClass._id 
+    });
     if (classDoc) {
-        await classDoc.populate('quizList.quiz').execPopulate();
+        await classDoc.populate('quizList.quiz')
+                      .execPopulate();
         return classDoc.quizList;
     }
     return [];
 });
+
+
+const suffle = (users) => { 
+    for(let j, x, i = users.length; i; j = Math.floor(Math.random() * i), 
+                                       x = users[--i], 
+                                       users[i] = users[j], 
+                                       users[j] = x);
+    return users;
+};  
+
+const getRandomGroups = (users, groupSize) => {
+    users = suffle(users);
+    let groups = [];
+    let numGroups = Math.floor((parseInt(users.length) + parseInt(groupSize) - 1) / parseInt(groupSize));
+    let numGreaterGroups = parseInt(users.length) % parseInt(numGroups);
+    if (numGreaterGroups === 0)
+        numGreaterGroups = numGroups;
+    for (let i = 0, j = 0; i < numGroups; ++i) {
+        let size = i < parseInt(numGreaterGroups) ? parseInt(groupSize) : parseInt(groupSize) - 1;
+        groups.push(users.slice(j, j+size));
+        j += size;
+    }
+    return groups;
+}
  
 module.exports = {
     imageBufferProcess,
     injectQuizToUser,
+    removeQuizFromUser,
     injectQuizToClass,
+    removeQuizFromClass,
     injectUserToClass,
-    injectUserToClass,
-    injectParticipantToQuiz,
+    removeUserFromClass,
+    injectStudentworkToQuiz,
+    removeStudentworkFromQuiz,
+    injectClassInformationToStudent,
+    removeClassInformationFromStudent,
+    injectStudentToClass,
+    removeStudentFromClass,
     createDocument,
     updateDocument,
     createQuiz,
-    getUserQuizzes
+    getUserQuizzes,
+    getRandomGroups
 }
