@@ -61,8 +61,8 @@ const buildReturnedObjectFinished = (finished, user) => {
         quiz.myWork = quiz.studentWorks.find(work => 
                             work.author.some(auth => auth.account === user.account));
         quiz.classmateWork = quiz.studentWorks.filter(work => 
-                                    !work.author.some(auth => auth.account === user.account) &&
-                                    work.curTaskDesc >= work.author.length);
+                                    (!work.author.some(auth => auth.account === user.account) &&
+                                    (work.curTaskDesc >= work.author.length || quiz.scribblyType === 'individual')));
         delete quiz.studentWorks;
     });
     return finishedObj;

@@ -174,7 +174,9 @@ router.get('/api/scribbly/finished', authenticate, async (req, res) => {
                 return myWork.curTaskDesc >= myWork.author.length;
             }
             return true;
-        })
+        });
+
+        console.log(finished);
 
         const finishedObj = scribblyLogic.buildReturnedObjectFinished(finished, req.user);
 
