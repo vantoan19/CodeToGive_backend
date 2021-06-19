@@ -27,7 +27,7 @@ router.post('/api/class/create', authenticate, isAdmin, async (req, res) => {
 
 // @POST /api/class/:classId/add-student/:account
 // @Desc Add an account to a class
-router.post('/api/class/:classId/add-student/:account', async (req, res) => {
+router.post('/api/class/:classId/add-student/:account', authenticate, isAdmin, async (req, res) => {
     try {
         const classDoc = await Class.findOne({ 
             classId: req.params.classId 

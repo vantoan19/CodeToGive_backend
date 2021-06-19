@@ -4,6 +4,7 @@ const userRouter = require('./routers/user');
 const picQuizRouter = require('./routers/pic-quiz');
 const classRouter = require('./routers/class');
 const skiriblyRouter = require('./routers/scribbly');
+const quizRouter = require('./routers/quiz');
 require('./db/connector');
 
 const upload = multer();
@@ -25,6 +26,7 @@ app.use(userRouter);
 app.use(picQuizRouter);
 app.use(classRouter);
 app.use(skiriblyRouter);
+app.use(quizRouter);
 
 app.listen(port, () => {
     console.log('Server is up on port', port);

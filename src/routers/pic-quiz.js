@@ -260,7 +260,7 @@ router.patch('/api/pic-quiz/:id', authenticate, isAdmin, upload.single('bigQuest
 
 // @PATCH /api/pic-quiz/:id/:questionType/:questionId
 // @Desc Modify a question of a task by question's id 
-router.patch('/api/pic-quiz/:quizId/:questionType/:questionId', authenticate, upload.single('questionImage'), async (req, res) => {
+router.patch('/api/pic-quiz/:quizId/:questionType/:questionId', authenticate, isAdmin, upload.single('questionImage'), async (req, res) => {
     try {
         //Find quiz and question document
         const quiz = await PicQuizz.findOne({ 
@@ -315,7 +315,7 @@ router.delete('/api/pic-quiz/:id', authenticate, isAdmin, async (req, res) => {
                 }));
 
         //Delete quiz from the class
-        quiz.classes.forEach(async classId => {
+        quiz.class.forEach(async classId => {
             const classDoc = await Class.findOne({ classId });
             classDoc && await logic.updateDocument(classDoc, {
                 quizList: classDoc.quizList.filter(curQuiz => curQuiz.quiz.str !== quiz._id.str)

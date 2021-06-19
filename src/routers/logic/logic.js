@@ -1,5 +1,7 @@
 const sharp = require('sharp');
 const Class = require('../../models/class');
+const FillInBlankQuestion = require('../../models/fill-in-blank-question');
+const MultipleChoiceQuestion = require('../../models/multiple-choice-question');
 
 const imageBufferProcess = async (originBuffer, width) => 
     await sharp(originBuffer).resize({ fit: sharp.fit.contain, width })
@@ -148,7 +150,23 @@ const getRandomGroups = (users, groupSize) => {
     }
     return groups;
 }
+
+const getDocumentByType = (questionType, obj) => 
+    questionType === 'fill-in-blank' ? new FillInBlankQuestion(obj) : new MultipleChoiceQuestion(obj);
  
+const getModelNameByType = (questionType) => 
+    questionType === 'fill-in-blank' ? 'FillInBlankQuestion' : 'MultipleChoiceQuestion';
+
+const findQuestionByType = async (questionType, indexes) =>
+questionType === 'fill-in-blank' 
+                ? await FillInBlankQuestion.findOne(indexes) 
+                : await MultipleChoiceQuestion.findOne(indexes);
+
+const deleteQuestionByType = async (questionType, indexes) =>
+questionType === 'FillInBlankQuestion' 
+            ? await FillInBlankQuestion.deleteOne(indexes) 
+            : await MultipleChoiceQuestion.deleteOne(indexes);
+
 module.exports = {
     imageBufferProcess,
     injectQuizToUser,
@@ -167,5 +185,9 @@ module.exports = {
     updateDocument,
     createQuiz,
     getUserQuizzes,
-    getRandomGroups
+    getRandomGroups,
+    getDocumentByType,
+    getModelNameByType,
+    findQuestionByType,
+    deleteQuestionByType
 }
