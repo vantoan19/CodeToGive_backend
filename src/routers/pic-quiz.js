@@ -95,6 +95,7 @@ router.post('/api/pic-quiz/submit/:quizId', authenticate, upload.none(), async (
             author: req.user,
             tryCount: curTry
         });
+        req.user.stars = parseInt(req.user.stars) + parseInt(req.body.score) / 20;
 
         await logic.injectStudentworkToQuiz(work, quiz);
         await logic.injectQuizToUser(quiz, req.user);
@@ -234,10 +235,10 @@ router.get('/api/question/:questionType/:id', async (req, res) => {
 // @PATCH /api/pic-quiz/:id
 // @Desc Modify quiz by id
 router.patch('/api/pic-quiz/:id', authenticate, isAdmin, upload.single('bigQuestionImage'), async (req, res) => {
-    if (Object.keys(req.body).includes('quizId')) 
-        return res.status(400).send({ 
-            error: 'Invalid update!' 
-        });
+    // if (Object.keys(req.body).includes('quizId')) 
+    //     return res.status(400).send({ 
+    //         error: 'Invalid update!' 
+    //     });
 
     try {
         const quiz = await PicQuizz.findOne({ 

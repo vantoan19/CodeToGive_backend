@@ -26,7 +26,7 @@ router.post('/api/scribbly/create', authenticate, isAdmin, upload.none(), async 
                     error: 'Class not found' 
                 });
 
-            const groupSize = req.body.groupSize ?? classDoc.studentList.length;
+            const groupSize = req.body.groupSize || classDoc.studentList.length;
             const groups = logic.getRandomGroups(classDoc.studentList, groupSize);
             console.log(groups);
             for (let i = 0; i < groups.length; ++i) {

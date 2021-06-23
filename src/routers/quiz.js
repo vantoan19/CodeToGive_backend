@@ -96,6 +96,7 @@ router.post('/api/quiz/submit/:quizId', authenticate, upload.none(), async (req,
             author: req.user,
             tryCount: curTry
         });
+        req.user.stars = parseInt(req.user.stars) + parseInt(req.body.score) / 20;
 
         await logic.injectStudentworkToQuiz(work, quiz);
         await logic.injectQuizToUser(quiz, req.user);
